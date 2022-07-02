@@ -40,6 +40,7 @@ namespace esphome
       this->pin_clock_ = pin_clock->to_isr();
       this->pin_data_ = pin_data->to_isr();
       pin_clock->attach_interrupt(MicronStore::interrupt, this, gpio::INTERRUPT_FALLING_EDGE);
+      // pin_clock->attach_interrupt(MicronStore::interrupt, this, gpio::INTERRUPT_RISING_EDGE);
     }
 
     void IRAM_ATTR MicronStore::interrupt(MicronStore *arg) {
