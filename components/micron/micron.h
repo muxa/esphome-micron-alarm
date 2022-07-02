@@ -69,6 +69,14 @@ namespace esphome
       void set_pin_clock(InternalGPIOPin *pin_clock) { pin_clock_ = pin_clock; }
       void set_pin_data(InternalGPIOPin *pin_data) { pin_data_ = pin_data; }
 
+      void set_m_binary_sensor(binary_sensor::BinarySensor  *m_binary_sensor) { m_binary_sensor_ = m_binary_sensor; }
+      void set_s1_binary_sensor(binary_sensor::BinarySensor  *s1_binary_sensor) { s1_binary_sensor_ = s1_binary_sensor; }
+      void set_s2_binary_sensor(binary_sensor::BinarySensor  *s2_binary_sensor) { s2_binary_sensor_ = s2_binary_sensor; }
+
+      void set_beep1_binary_sensor(binary_sensor::BinarySensor  *beep1_binary_sensor) { beep1_binary_sensor_ = beep1_binary_sensor; }
+      void set_beep2_binary_sensor(binary_sensor::BinarySensor  *beep2_binary_sensor) { beep2_binary_sensor_ = beep2_binary_sensor; }
+      void set_beep3_binary_sensor(binary_sensor::BinarySensor  *beep3_binary_sensor) { beep3_binary_sensor_ = beep3_binary_sensor; }
+
       void set_zone1_binary_sensor(binary_sensor::BinarySensor  *zone1_binary_sensor) { zone1_binary_sensor_ = zone1_binary_sensor; }
       void set_zone2_binary_sensor(binary_sensor::BinarySensor  *zone2_binary_sensor) { zone2_binary_sensor_ = zone2_binary_sensor; }
       void set_zone3_binary_sensor(binary_sensor::BinarySensor  *zone3_binary_sensor) { zone3_binary_sensor_ = zone3_binary_sensor; }
@@ -86,6 +94,14 @@ namespace esphome
       MicronStore store_;
       InternalGPIOPin *pin_clock_;
       InternalGPIOPin *pin_data_;      
+
+      binary_sensor::BinarySensor *m_binary_sensor_{nullptr};
+      binary_sensor::BinarySensor *s1_binary_sensor_{nullptr};
+      binary_sensor::BinarySensor *s2_binary_sensor_{nullptr};
+
+      binary_sensor::BinarySensor *beep1_binary_sensor_{nullptr};
+      binary_sensor::BinarySensor *beep2_binary_sensor_{nullptr};
+      binary_sensor::BinarySensor *beep3_binary_sensor_{nullptr};
 
       binary_sensor::BinarySensor *zone1_binary_sensor_{nullptr};
       binary_sensor::BinarySensor *zone2_binary_sensor_{nullptr};

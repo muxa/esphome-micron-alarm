@@ -84,6 +84,25 @@ namespace esphome
     void MicronComponent::update() {
       ESP_LOGD(TAG, "Command: %x,  Status: %x, Bits: %d, Packets: %d", this->store_.command, this->store_.status, this->store_.bits_received, this->store_.packets_received);
 
+      if (this->m_binary_sensor_) {
+        this->m_binary_sensor_->publish_state((this->store_.status & MICRON_M_MASK) == MICRON_M_MASK);
+      }
+      if (this->s1_binary_sensor_) {
+        this->s1_binary_sensor_->publish_state((this->store_.status & MICRON_S1_MASK) == MICRON_S1_MASK);
+      }
+      if (this->s2_binary_sensor_) {
+        this->s2_binary_sensor_->publish_state((this->store_.status & MICRON_S2_MASK) == MICRON_S2_MASK);
+      }
+      if (this->beep1_binary_sensor_) {
+        this->beep1_binary_sensor_->publish_state((this->store_.status & MICRON_KEY_BEEP_1_MASK) == MICRON_KEY_BEEP_1_MASK);
+      }
+      if (this->beep2_binary_sensor_) {
+        this->beep2_binary_sensor_->publish_state((this->store_.status & MICRON_KEY_BEEP_2_MASK) == MICRON_KEY_BEEP_2_MASK);
+      }
+      if (this->beep3_binary_sensor_) {
+        this->beep3_binary_sensor_->publish_state((this->store_.status & MICRON_KEY_BEEP_3_MASK) == MICRON_KEY_BEEP_3_MASK);
+      }
+
       if (this->zone1_binary_sensor_) {
         this->zone1_binary_sensor_->publish_state((this->store_.status & MICRON_ZONE_1_MASK) == MICRON_ZONE_1_MASK);
       }
