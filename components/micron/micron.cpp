@@ -118,6 +118,14 @@ namespace esphome
       if (this->zone5_binary_sensor_) {
         this->zone5_binary_sensor_->publish_state((this->store_.status & MICRON_ZONE_5_MASK) == MICRON_ZONE_5_MASK);
       }
+      if (this->keypad_text_sensor_ && this->last_published_command_ != this->store_.command) {
+        this->keypad_text_sensor_->publish_state(str_sprintf("0x%02x", this->store_.command));
+        this->last_published_command_ = this->store_.command;
+      }
+      if (this->status_text_sensor_ && this->last_published_status_ != this->store_.status) {
+        this->status_text_sensor_->publish_state(str_sprintf("0x%04x", this->store_.status));
+        this->last_published_status_ = this->store_.status;
+      }
     }
 
     float MicronComponent::get_setup_priority() const { return setup_priority::DATA; }

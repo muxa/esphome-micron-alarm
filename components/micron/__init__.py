@@ -5,7 +5,7 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome import automation
 from esphome import pins
-from esphome.components import binary_sensor
+from esphome.components import binary_sensor, text_sensor
 from esphome.cpp_helpers import gpio_pin_expression
 
 from esphome.const import (
@@ -16,12 +16,13 @@ from esphome.const import (
     DEVICE_CLASS_POWER,
     DEVICE_CLASS_PROBLEM,
     DEVICE_CLASS_SOUND,
+    ENTITY_CATEGORY_DIAGNOSTIC,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 CODEOWNERS = ["@muxa"]
-AUTO_LOAD = ["binary_sensor"]
+AUTO_LOAD = ["binary_sensor", "text_sensor"]
 
 micron_ns = cg.esphome_ns.namespace("micron")
 
@@ -41,6 +42,9 @@ CONF_ZONE_2 = "zone2"
 CONF_ZONE_3 = "zone3"
 CONF_ZONE_4 = "zone4"
 CONF_ZONE_5 = "zone5"
+
+CONF_KEYPAD = "keypad"
+CONF_STATUS = "status"
 
 CONFIG_SCHEMA = cv.All(
     cv.Schema(
@@ -81,6 +85,14 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_ZONE_5): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_OCCUPANCY,
             ),
+            cv.Optional(CONF_KEYPAD): text_sensor.text_sensor_schema(                
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+                icon="mdi:dialpad"
+            ),
+            cv.Optional(CONF_STATUS): text_sensor.text_sensor_schema(                
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+                icon="mdi:list-status"
+            ),
         }
     ).extend(cv.polling_component_schema("60s"))#.extend(cv.COMPONENT_SCHEMA)
 )
@@ -116,7 +128,7 @@ async def to_code(config):
 
     if CONF_BEEP_2 in config:
         sens = await binary_sensor.new_binary_sensor(config[CONF_BEEP_2])
-        cg.add(var.set_beep1_binary_sensor(sens))
+        cg.add(var.set_beep2_binary_sensor(sens))
 
     if CONF_BEEP_3 in config:
         sens = await binary_sensor.new_binary_sensor(config[CONF_BEEP_3])
@@ -141,5 +153,13 @@ async def to_code(config):
     if CONF_ZONE_5 in config:
         sens = await binary_sensor.new_binary_sensor(config[CONF_ZONE_5])
         cg.add(var.set_zone5_binary_sensor(sens))
+
+    if CONF_KEYPAD in config:
+        sens = await text_sensor.new_text_sensor(config[CONF_KEYPAD])
+        cg.add(var.set_keypad_text_sensor(sens))
+
+    if CONF_STATUS in config:
+        sens = await text_sensor.new_text_sensor(config[CONF_STATUS])
+        cg.add(var.set_status_text_sensor(sens))
 
     cg.add(var.dump_config())
