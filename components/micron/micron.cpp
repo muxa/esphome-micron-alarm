@@ -74,10 +74,31 @@ namespace esphome
       ESP_LOGCONFIG(TAG, "Micron:");
       LOG_PIN("  Pin Clock: ", this->pin_clock_);
       LOG_PIN("  Pin Data: ", this->pin_data_);
+      LOG_BINARY_SENSOR("  ", "Zone 1", this->zone1_binary_sensor_);
+      LOG_BINARY_SENSOR("  ", "Zone 2", this->zone2_binary_sensor_);
+      LOG_BINARY_SENSOR("  ", "Zone 3", this->zone3_binary_sensor_);
+      LOG_BINARY_SENSOR("  ", "Zone 4", this->zone4_binary_sensor_);
+      LOG_BINARY_SENSOR("  ", "Zone 5", this->zone5_binary_sensor_);
     }
 
     void MicronComponent::update() {
       ESP_LOGD(TAG, "Command: %x,  Status: %x, Bits: %d, Packets: %d", this->store_.command, this->store_.status, this->store_.bits_received, this->store_.packets_received);
+
+      if (this->zone1_binary_sensor_) {
+        this->zone1_binary_sensor_->publish_state((this->store_.status & MICRON_ZONE_1_MASK) == MICRON_ZONE_1_MASK);
+      }
+      if (this->zone2_binary_sensor_) {
+        this->zone2_binary_sensor_->publish_state((this->store_.status & MICRON_ZONE_2_MASK) == MICRON_ZONE_2_MASK);
+      }
+      if (this->zone3_binary_sensor_) {
+        this->zone3_binary_sensor_->publish_state((this->store_.status & MICRON_ZONE_3_MASK) == MICRON_ZONE_3_MASK);
+      }
+      if (this->zone4_binary_sensor_) {
+        this->zone4_binary_sensor_->publish_state((this->store_.status & MICRON_ZONE_4_MASK) == MICRON_ZONE_4_MASK);
+      }
+      if (this->zone5_binary_sensor_) {
+        this->zone5_binary_sensor_->publish_state((this->store_.status & MICRON_ZONE_5_MASK) == MICRON_ZONE_5_MASK);
+      }
     }
 
     float MicronComponent::get_setup_priority() const { return setup_priority::DATA; }
