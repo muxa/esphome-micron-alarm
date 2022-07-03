@@ -32,8 +32,8 @@ MicronComponent = micron_ns.class_(
 
 MicronPressAction = micron_ns.class_("MicronPressAction", automation.Action)
 
+CONF_DATA_IN_PIN = "data_in_pin"
 CONF_DATA_OUT_PIN = "data_out_pin"
-
 CONF_PRESS_KEYS = "keys"
 
 CONF_M = "m"
@@ -57,7 +57,7 @@ CONFIG_SCHEMA = cv.All(
         {
             cv.GenerateID(): cv.declare_id(MicronComponent),
             cv.Required(CONF_CLOCK_PIN): cv.All(pins.internal_gpio_input_pin_schema),
-            cv.Required(CONF_DATA_PIN): cv.All(pins.internal_gpio_input_pin_schema),
+            cv.Required(CONF_DATA_IN_PIN): cv.All(pins.internal_gpio_input_pin_schema),
             cv.Required(CONF_DATA_OUT_PIN): cv.All(pins.internal_gpio_output_pin_schema),
             cv.Optional(CONF_M): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_POWER,
@@ -114,7 +114,7 @@ async def to_code(config):
 
     pin_clock = await gpio_pin_expression(config[CONF_CLOCK_PIN])
     cg.add(var.set_pin_clock(pin_clock))
-    pin_data = await gpio_pin_expression(config[CONF_DATA_PIN])
+    pin_data = await gpio_pin_expression(config[CONF_DATA_IN_PIN])
     cg.add(var.set_pin_data(pin_data))
     pin_data_out = await gpio_pin_expression(config[CONF_DATA_OUT_PIN])
     cg.add(var.set_pin_data_out(pin_data_out))
