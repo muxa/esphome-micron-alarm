@@ -8,6 +8,36 @@ namespace esphome
 
     static const char *const TAG = "micron";
 
+    uint8_t key_to_command(const char key) {
+      // ESP_LOGD("key_to_command", "Key: %x", key);
+      switch (key) {
+        case '1': return MICRON_KEYPAD_1;
+        case '2': return MICRON_KEYPAD_2;
+        case '3': return MICRON_KEYPAD_3;
+        case '4': return MICRON_KEYPAD_4;
+        case '5': return MICRON_KEYPAD_5;
+        case '6': return MICRON_KEYPAD_6;
+        case '7': return MICRON_KEYPAD_7;
+        case '8': return MICRON_KEYPAD_8;
+        case '9': return MICRON_KEYPAD_9;
+        case '0': return MICRON_KEYPAD_0;
+        case '*': return MICRON_KEYPAD_STAR;
+        case '#': return MICRON_KEYPAD_HASH;
+      }
+      return 0;
+    }
+
+    std::vector<uint8_t> keys_to_commands(const std::string &keys) {
+      //ESP_LOGD("keys_to_commands", "Keys: %s", keys.c_str());
+
+      std::vector<uint8_t> commands;
+      for(char c : keys) {
+        //ESP_LOGD("keys_to_command", "Key: %c", c);
+        commands.push_back(key_to_command(c));
+      }
+      return commands;
+    }
+
     bool IRAM_ATTR MicronDataProcessor::decode(uint32_t ms, bool data, ISRInternalGPIOPin *pin_data_out) {
       // check if a new message has started, based on time since previous bit
       if ((ms - this->prev_ms_) > MICRON_MAX_MS) {
@@ -113,6 +143,11 @@ namespace esphome
       {
           this->write(command);
       }      
+    }
+
+    void MicronComponent::press(const std::string &keys) {
+      ESP_LOGD(TAG, "Press keys: %s", keys.c_str());
+      this->write(keys_to_commands(keys));
     }
 
     void MicronComponent::setup()
