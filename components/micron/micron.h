@@ -46,6 +46,8 @@ namespace esphome
     static const uint16_t MICRON_S2_MASK = 0x4000;
     static const uint16_t MICRON_M_MASK = 0x2000;
 
+    static const uint32_t MICRON_MAX_COMMAND_DELAY_MS = 240;
+
     struct MicronPacket {
       uint8_t command;
       uint16_t status;
@@ -144,6 +146,9 @@ namespace esphome
 
       Deduplicator<uint8_t> command_dedupe_;
       Deduplicator<uint16_t> status_dedupe_;
+
+      uint32_t last_command_ms_ = 0;
+      std::queue<uint8_t> command_queue_;
     };
 
   } // namespace micron

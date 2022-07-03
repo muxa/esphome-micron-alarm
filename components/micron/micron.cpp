@@ -104,9 +104,7 @@ namespace esphome
     }
 
     void MicronComponent::write(uint8_t command) {
-      ESP_LOGD(TAG, "Write command: 0x%02x", command);
-      this->store_.write(command, 2);
-      //this->pin_data_out_->digital_write(command > 0);
+      this->command_queue_.push(command);
     }
 
     void MicronComponent::setup()
@@ -174,6 +172,17 @@ namespace esphome
       }
       if (this->status_text_sensor_ && this->status_dedupe_.next(this->store_.status)) {
         this->status_text_sensor_->publish_state(str_sprintf("0x%04x", this->store_.status));
+      }
+
+      if (!this->command_queue_.empty() && (millis() - this->last_command_ms_) >= MICRON_MAX_COMMAND_DELAY_MS) {
+        this->last_command_ms_ = millis();
+        auto command = this->command_queue_.front();
+        ESP_LOGD(TAG, "Write command: 0x%02x", command);
+        this->store_.write(command, 2);
+        this->command_queue_.pop();
+        if (this->command_queue_.empty()) {
+          ESP_LOGD(TAG, "All commands written");
+        }
       }
     }
 
