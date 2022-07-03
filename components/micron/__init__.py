@@ -30,7 +30,11 @@ MicronComponent = micron_ns.class_(
     "MicronComponent", cg.PollingComponent
 )
 
+MicronPressAction = micron_ns.class_("MicronPressAction", automation.Action)
+
 CONF_DATA_OUT_PIN = "data_out_pin"
+
+CONF_PRESS_KEYS = "keys"
 
 CONF_M = "m"
 CONF_S1 = "s1"
@@ -168,3 +172,19 @@ async def to_code(config):
         cg.add(var.set_status_text_sensor(sens))
 
     cg.add(var.dump_config())
+
+@automation.register_action(
+    "micron.press",
+    MicronPressAction,
+    cv.maybe_simple_value(
+        {
+            cv.GenerateID(): cv.use_id(MicronComponent),
+            cv.Required(CONF_PRESS_KEYS): cv.string_strict,
+        },
+        key=CONF_PRESS_KEYS
+    ),
+)
+def micron_press_to_code(config, action_id, template_arg, args):
+    var = cg.new_Pvariable(action_id, template_arg, config[CONF_PRESS_KEYS])
+    yield cg.register_parented(var, config[CONF_ID])
+    yield var
