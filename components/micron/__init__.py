@@ -30,6 +30,8 @@ MicronComponent = micron_ns.class_(
     "MicronComponent", cg.PollingComponent
 )
 
+CONF_DATA_OUT_PIN = "data_out_pin"
+
 CONF_M = "m"
 CONF_S1 = "s1"
 CONF_S2 = "s2"
@@ -52,6 +54,7 @@ CONFIG_SCHEMA = cv.All(
             cv.GenerateID(): cv.declare_id(MicronComponent),
             cv.Required(CONF_CLOCK_PIN): cv.All(pins.internal_gpio_input_pin_schema),
             cv.Required(CONF_DATA_PIN): cv.All(pins.internal_gpio_input_pin_schema),
+            cv.Required(CONF_DATA_OUT_PIN): cv.All(pins.internal_gpio_output_pin_schema),
             cv.Optional(CONF_M): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_POWER,
             ),
@@ -109,6 +112,8 @@ async def to_code(config):
     cg.add(var.set_pin_clock(pin_clock))
     pin_data = await gpio_pin_expression(config[CONF_DATA_PIN])
     cg.add(var.set_pin_data(pin_data))
+    pin_data_out = await gpio_pin_expression(config[CONF_DATA_OUT_PIN])
+    cg.add(var.set_pin_data_out(pin_data_out))
 
     if CONF_M in config:
         sens = await binary_sensor.new_binary_sensor(config[CONF_M])

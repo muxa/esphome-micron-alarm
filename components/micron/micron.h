@@ -18,10 +18,20 @@ namespace esphome
     static const uint8_t MICRON_BYTE_HIGH = 1;
     static const uint8_t MICRON_BYTE_LOW = 2;
 
-    // static const uint16_t MICRON_KEYPAD_1_MASK = 0x48;
-    // static const uint16_t MICRON_KEYPAD_2_MASK = 0x28;
-    // static const uint16_t MICRON_KEYPAD_3_MASK = 0x18;
-    // static const uint16_t MICRON_KEYPAD_4_MASK = 0x48;
+    static const uint8_t MICRON_COMMAND_FRAME_SIZE = 7;
+
+    static const uint16_t MICRON_KEYPAD_1 = 0x48;
+    static const uint16_t MICRON_KEYPAD_2 = 0x28;
+    static const uint16_t MICRON_KEYPAD_3 = 0x18;
+    static const uint16_t MICRON_KEYPAD_4 = 0x44;
+    static const uint16_t MICRON_KEYPAD_5 = 0x24;
+    static const uint16_t MICRON_KEYPAD_6 = 0x14;
+    static const uint16_t MICRON_KEYPAD_7 = 0x42;
+    static const uint16_t MICRON_KEYPAD_8 = 0x22;
+    static const uint16_t MICRON_KEYPAD_9 = 0x12;
+    static const uint16_t MICRON_KEYPAD_STAR = 0x41;
+    static const uint16_t MICRON_KEYPAD_0 = 0x21;
+    static const uint16_t MICRON_KEYPAD_HASH = 0x11;
 
     static const uint16_t MICRON_ZONE_1_MASK = 0x01;
     static const uint16_t MICRON_ZONE_2_MASK = 0x02;
@@ -42,8 +52,11 @@ namespace esphome
 
     class MicronDataProcessor {
     public:
-      bool decode(uint32_t ms, bool data);
+      bool decode(uint32_t ms, bool data, ISRInternalGPIOPin *pin_data);
       MicronPacket *packet = new MicronPacket;
+      uint8_t command_out = 0;
+      uint8_t command_repeat = 0;
+      uint8_t remaining_command_writes = 0;
 
     protected:
       uint8_t buffer_[MICRON_PACKET_LEN];
@@ -58,13 +71,16 @@ namespace esphome
       uint32_t bits_received = 0;
       uint32_t packets_received = 0;
 
-      void setup(InternalGPIOPin *pin_clock, InternalGPIOPin *pin_data);
+      void setup(InternalGPIOPin *pin_clock, InternalGPIOPin *pin_data, InternalGPIOPin *pin_data_out);
+      void write(uint8_t command, uint8_t repeat = 1);
       static void interrupt(MicronStore *arg);
+
+      MicronDataProcessor processor_;
 
     protected:
       ISRInternalGPIOPin pin_clock_;
       ISRInternalGPIOPin pin_data_;
-      MicronDataProcessor processor_;
+      ISRInternalGPIOPin pin_data_out_;
 
       void set_data_(MicronPacket *packet);
     };
@@ -74,6 +90,7 @@ namespace esphome
     public:
       void set_pin_clock(InternalGPIOPin *pin_clock) { pin_clock_ = pin_clock; }
       void set_pin_data(InternalGPIOPin *pin_data) { pin_data_ = pin_data; }
+      void set_pin_data_out(InternalGPIOPin *pin_data_out) { pin_data_out_ = pin_data_out; }
 
       void set_m_binary_sensor(binary_sensor::BinarySensor  *m_binary_sensor) { m_binary_sensor_ = m_binary_sensor; }
       void set_s1_binary_sensor(binary_sensor::BinarySensor  *s1_binary_sensor) { s1_binary_sensor_ = s1_binary_sensor; }
@@ -92,6 +109,8 @@ namespace esphome
       void set_keypad_text_sensor(text_sensor::TextSensor  *keypad_text_sensor) { keypad_text_sensor_ = keypad_text_sensor; }
       void set_status_text_sensor(text_sensor::TextSensor  *status_text_sensor) { status_text_sensor_ = status_text_sensor; }
 
+      void write(uint8_t command);
+
       // ========== INTERNAL METHODS ==========
       // (In most use cases you won't need these)
       void setup() override;
@@ -102,7 +121,8 @@ namespace esphome
     protected:
       MicronStore store_;
       InternalGPIOPin *pin_clock_;
-      InternalGPIOPin *pin_data_;      
+      InternalGPIOPin *pin_data_;
+      InternalGPIOPin *pin_data_out_;
 
       binary_sensor::BinarySensor *m_binary_sensor_{nullptr};
       binary_sensor::BinarySensor *s1_binary_sensor_{nullptr};
