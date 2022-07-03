@@ -49,11 +49,6 @@ namespace esphome
         }
       }
 
-      if ((ms - this->prev_ms_) < MICRON_MIN_MS) {
-        this->prev_ms_ = ms;
-        // too short
-        return false;
-      }
       this->prev_ms_ = ms;
 
       if (this->remaining_command_writes > 0) {
@@ -113,17 +108,37 @@ namespace esphome
     void MicronStore::write(uint8_t command, uint8_t repeat) {
       this->processor_.command_out = command;
       this->processor_.command_repeat = repeat;
+      this->commands_sent++;
       //this->processor_.remaining_command_writes = MICRON_COMMAND_FRAME_SIZE + 1;
     }
 
     void IRAM_ATTR MicronStore::interrupt(MicronStore *arg) {
-      uint32_t now = micros();
+      arg->interrupts++;
+      arg->packet_interrupts++;
+
+      uint32_t now_us = micros();
+
+      if ((now_us - arg->last_interrupt_us_) < MICRON_MIN_US) {
+        // too shorter delay between interrupts.
+        // this is caused by us sending command back to the panel, 
+        // which seems to cause and issue on the clock line
+        return;
+      }
+
+      arg->last_interrupt_us_ = now_us;
+
       bool data_bit = arg->pin_data_.digital_read();
 
-      arg->bits_received++;      
+      arg->bits_received++;
+      arg->packet_bits++;
 
-      if (arg->processor_.decode(now, data_bit, &arg->pin_data_out_)) {
+      if (arg->processor_.decode(millis(), data_bit, &arg->pin_data_out_)) {
         arg->packets_received++;
+        if (arg->packet_interrupts > arg->packet_bits) {
+          arg->packets_with_interference++;
+        }
+        arg->packet_interrupts = 0;
+        arg->packet_bits = 0;
         arg->set_data_(arg->processor_.packet);
       }
     }
@@ -221,17 +236,23 @@ namespace esphome
         this->last_command_ms_ = millis();
         auto command = this->command_queue_.front();
         ESP_LOGD(TAG, "Write command: 0x%02x", command);
-        this->store_.write(command, 2);
+        this->store_.write(command, 2);        
         this->command_queue_.pop();
         if (this->command_queue_.empty()) {
-          ESP_LOGD(TAG, "All commands written");
+          ESP_LOGD(TAG, "All commands written");          
         }
       }
     }
 
     void MicronComponent::update() {
-      ESP_LOGD(TAG, "Command: %x,  Status: %x, Bits: %d, Packets: %d", this->store_.command, this->store_.status, this->store_.bits_received, this->store_.packets_received);
-      ESP_LOGD(TAG, "Write stats: 0x%02x  repeat %d bits %d", this->store_.processor_.command_out, this->store_.processor_.command_repeat, this->store_.processor_.remaining_command_writes);
+      ESP_LOGD(TAG, "Command: 0x%02x,  Status: 0x%04x", this->store_.command, this->store_.status);
+      ESP_LOGD(TAG, "Interrupts: %d, Bits: %d, Packets: %d, Packets Fixed: %d, Commands Sent: %d", 
+        this->store_.interrupts,
+        this->store_.bits_received, 
+        this->store_.packets_received,
+        this->store_.packets_with_interference,
+        this->store_.commands_sent);
+      //ESP_LOGD(TAG, "Write stats: 0x%02x  repeat %d bits %d", this->store_.processor_.command_out, this->store_.processor_.command_repeat, this->store_.processor_.remaining_command_writes);
     }
 
     float MicronComponent::get_setup_priority() const { return setup_priority::DATA; }

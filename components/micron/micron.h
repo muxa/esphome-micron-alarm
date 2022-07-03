@@ -11,8 +11,8 @@ namespace esphome
   namespace micron
   {
 
-    static const uint32_t MICRON_MIN_MS = 100;
-    static const uint32_t MICRON_MAX_MS = 30000;
+    static const uint32_t MICRON_MIN_US = 100;
+    static const uint32_t MICRON_MAX_MS = 30;
     static const uint8_t MICRON_PACKET_LEN = 3;
     static const uint8_t MICRON_FRAME_SIZE = 24;
     static const uint8_t MICRON_BYTE_COMMAND = 0;
@@ -74,8 +74,14 @@ namespace esphome
     public:
       uint8_t command;
       uint16_t status;
+
+      uint32_t interrupts = 0;
       uint32_t bits_received = 0;
+      uint32_t packet_interrupts = 0;
+      uint32_t packet_bits = 0;
       uint32_t packets_received = 0;
+      uint32_t packets_with_interference = 0;
+      uint32_t commands_sent = 0;
 
       void setup(InternalGPIOPin *pin_clock, InternalGPIOPin *pin_data, InternalGPIOPin *pin_data_out);
       void write(uint8_t command, uint8_t repeat = 1);
@@ -87,6 +93,8 @@ namespace esphome
       ISRInternalGPIOPin pin_clock_;
       ISRInternalGPIOPin pin_data_;
       ISRInternalGPIOPin pin_data_out_;
+
+      uint32_t last_interrupt_us_;
 
       void set_data_(MicronPacket *packet);
     };
