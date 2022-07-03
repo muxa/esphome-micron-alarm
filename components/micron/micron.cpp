@@ -32,6 +32,8 @@ namespace esphome
         }
 
         this->remaining_command_writes--;
+      } else {
+        pin_data_out->digital_write(false);
       }
 
       //pin_data_out->digital_write(this->num_bits_ % 2 == 0);
