@@ -5,6 +5,7 @@
 #include "esphome/components/text_sensor/text_sensor.h"
 #include "esphome/core/hal.h"
 #include "esphome/core/helpers.h"
+#include "esphome/core/log.h"
 
 namespace esphome
 {
@@ -47,6 +48,36 @@ namespace esphome
     static const uint16_t MICRON_M_MASK = 0x2000;
 
     static const uint32_t MICRON_MAX_COMMAND_DELAY_MS = 240;
+
+    static uint8_t key_to_command(const char key) {
+      // ESP_LOGD("key_to_command", "Key: %x", key);
+      switch (key) {
+        case '1': return MICRON_KEYPAD_1;
+        case '2': return MICRON_KEYPAD_2;
+        case '3': return MICRON_KEYPAD_3;
+        case '4': return MICRON_KEYPAD_4;
+        case '5': return MICRON_KEYPAD_5;
+        case '6': return MICRON_KEYPAD_6;
+        case '7': return MICRON_KEYPAD_7;
+        case '8': return MICRON_KEYPAD_8;
+        case '9': return MICRON_KEYPAD_9;
+        case '0': return MICRON_KEYPAD_0;
+        case '*': return MICRON_KEYPAD_STAR;
+        case '#': return MICRON_KEYPAD_HASH;
+      }
+      return 0;
+    }
+
+    static std::vector<uint8_t> keys_to_commands(const std::string &keys) {
+      //ESP_LOGD("keys_to_commands", "Keys: %s", keys.c_str());
+
+      std::vector<uint8_t> commands;
+      for(char c : keys) {
+        //ESP_LOGD("keys_to_command", "Key: %c", c);
+        commands.push_back(key_to_command(c));
+      }
+      return commands;
+    }
 
     struct MicronPacket {
       uint8_t command;
@@ -113,6 +144,7 @@ namespace esphome
       void set_status_text_sensor(text_sensor::TextSensor  *status_text_sensor) { status_text_sensor_ = status_text_sensor; }
 
       void write(uint8_t command);
+      void write(std::vector<uint8_t> commands);
 
       // ========== INTERNAL METHODS ==========
       // (In most use cases you won't need these)

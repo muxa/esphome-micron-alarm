@@ -104,7 +104,15 @@ namespace esphome
     }
 
     void MicronComponent::write(uint8_t command) {
+      // ESP_LOGD(TAG, "Enqueue command: 0x%02x", command);
       this->command_queue_.push(command);
+    }
+
+    void MicronComponent::write(std::vector<uint8_t> commands) {
+      for (const auto command : commands)
+      {
+          this->write(command);
+      }      
     }
 
     void MicronComponent::setup()
