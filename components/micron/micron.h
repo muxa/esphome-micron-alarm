@@ -96,7 +96,7 @@ namespace esphome
       // (In most use cases you won't need these)
       void setup() override;
       void dump_config() override;
-      // void loop() override;
+      void loop() override;
       void update() override;
       float get_setup_priority() const override;
     protected:
@@ -121,8 +121,8 @@ namespace esphome
       text_sensor::TextSensor *keypad_text_sensor_{nullptr};
       text_sensor::TextSensor *status_text_sensor_{nullptr};
 
-      uint8_t last_published_command_ = 0xff;
-      uint16_t last_published_status_ = 0xffff;
+      Deduplicator<uint8_t> command_dedupe_;
+      Deduplicator<uint16_t> status_dedupe_;
     };
 
   } // namespace micron

@@ -81,8 +81,7 @@ namespace esphome
       LOG_BINARY_SENSOR("  ", "Zone 5", this->zone5_binary_sensor_);
     }
 
-    void MicronComponent::update() {
-      ESP_LOGD(TAG, "Command: %x,  Status: %x, Bits: %d, Packets: %d", this->store_.command, this->store_.status, this->store_.bits_received, this->store_.packets_received);
+    void MicronComponent::loop() {
 
       if (this->m_binary_sensor_) {
         this->m_binary_sensor_->publish_state((this->store_.status & MICRON_M_MASK) == MICRON_M_MASK);
@@ -93,6 +92,7 @@ namespace esphome
       if (this->s2_binary_sensor_) {
         this->s2_binary_sensor_->publish_state((this->store_.status & MICRON_S2_MASK) == MICRON_S2_MASK);
       }
+
       if (this->beep1_binary_sensor_) {
         this->beep1_binary_sensor_->publish_state((this->store_.status & MICRON_KEY_BEEP_1_MASK) == MICRON_KEY_BEEP_1_MASK);
       }
@@ -118,14 +118,17 @@ namespace esphome
       if (this->zone5_binary_sensor_) {
         this->zone5_binary_sensor_->publish_state((this->store_.status & MICRON_ZONE_5_MASK) == MICRON_ZONE_5_MASK);
       }
-      if (this->keypad_text_sensor_ && this->last_published_command_ != this->store_.command) {
+      
+      if (this->keypad_text_sensor_ && this->command_dedupe_.next(this->store_.command)) {
         this->keypad_text_sensor_->publish_state(str_sprintf("0x%02x", this->store_.command));
-        this->last_published_command_ = this->store_.command;
       }
-      if (this->status_text_sensor_ && this->last_published_status_ != this->store_.status) {
+      if (this->status_text_sensor_ && this->status_dedupe_.next(this->store_.status)) {
         this->status_text_sensor_->publish_state(str_sprintf("0x%04x", this->store_.status));
-        this->last_published_status_ = this->store_.status;
       }
+    }
+
+    void MicronComponent::update() {
+      // ESP_LOGD(TAG, "Command: %x,  Status: %x, Bits: %d, Packets: %d", this->store_.command, this->store_.status, this->store_.bits_received, this->store_.packets_received);
     }
 
     float MicronComponent::get_setup_priority() const { return setup_priority::DATA; }
