@@ -12,6 +12,17 @@ namespace esphome
       // check if a new message has started, based on time since previous bit
       if ((ms - this->prev_ms_) > MICRON_MAX_MS) {
         this->num_bits_ = 0;
+
+        if (this->command_repeat > 0) {
+          // more repeats. restart write bits
+          this->remaining_command_writes = MICRON_COMMAND_FRAME_SIZE + 1;
+        }
+      }
+
+      if ((ms - this->prev_ms_) < MICRON_MIN_MS) {
+        this->prev_ms_ = ms;
+        // too short
+        return false;
       }
       this->prev_ms_ = ms;
 
@@ -51,11 +62,6 @@ namespace esphome
           this->packet->command = this->buffer_[MICRON_BYTE_COMMAND] >> 1;
           this->packet->status = this->buffer_[MICRON_BYTE_HIGH] << 8 | this->buffer_[MICRON_BYTE_LOW];
 
-          if (this->command_repeat > 0) {
-            // more repeats. restart write bits
-            this->remaining_command_writes = MICRON_COMMAND_FRAME_SIZE + 1;
-          }
-
           return true;
         }
       }
@@ -77,11 +83,11 @@ namespace esphome
     void MicronStore::write(uint8_t command, uint8_t repeat) {
       this->processor_.command_out = command;
       this->processor_.command_repeat = repeat;
-      this->processor_.remaining_command_writes = MICRON_COMMAND_FRAME_SIZE + 1;
+      //this->processor_.remaining_command_writes = MICRON_COMMAND_FRAME_SIZE + 1;
     }
 
     void IRAM_ATTR MicronStore::interrupt(MicronStore *arg) {
-      uint32_t now = millis();
+      uint32_t now = micros();
       bool data_bit = arg->pin_data_.digital_read();
 
       arg->bits_received++;      
@@ -172,7 +178,7 @@ namespace esphome
     }
 
     void MicronComponent::update() {
-      // ESP_LOGD(TAG, "Command: %x,  Status: %x, Bits: %d, Packets: %d", this->store_.command, this->store_.status, this->store_.bits_received, this->store_.packets_received);
+      ESP_LOGD(TAG, "Command: %x,  Status: %x, Bits: %d, Packets: %d", this->store_.command, this->store_.status, this->store_.bits_received, this->store_.packets_received);
       ESP_LOGD(TAG, "Write stats: 0x%02x  repeat %d bits %d", this->store_.processor_.command_out, this->store_.processor_.command_repeat, this->store_.processor_.remaining_command_writes);
     }
 

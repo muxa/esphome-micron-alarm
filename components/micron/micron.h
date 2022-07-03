@@ -11,7 +11,8 @@ namespace esphome
   namespace micron
   {
 
-    static const uint8_t MICRON_MAX_MS = 30;
+    static const uint32_t MICRON_MIN_MS = 100;
+    static const uint32_t MICRON_MAX_MS = 30000;
     static const uint8_t MICRON_PACKET_LEN = 3;
     static const uint8_t MICRON_FRAME_SIZE = 24;
     static const uint8_t MICRON_BYTE_COMMAND = 0;
