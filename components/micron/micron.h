@@ -59,7 +59,9 @@ namespace esphome
 
     class MicronDataProcessor {
     public:
-      bool decode(uint32_t ms, bool data, ISRInternalGPIOPin *pin_data);
+      void next(uint32_t ms);
+      void write(ISRInternalGPIOPin *pin_data_out);
+      bool decode(uint32_t ms, bool data);
       MicronPacket *packet = new MicronPacket;
       uint8_t command_out = 0;
       uint8_t command_repeat = 0;

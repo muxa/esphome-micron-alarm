@@ -38,7 +38,7 @@ namespace esphome
       return commands;
     }
 
-    bool IRAM_ATTR MicronDataProcessor::decode(uint32_t ms, bool data, ISRInternalGPIOPin *pin_data_out) {
+    void IRAM_ATTR MicronDataProcessor::next(uint32_t ms) {
       // check if a new message has started, based on time since previous bit
       if ((ms - this->prev_ms_) > MICRON_MAX_MS) {
         this->num_bits_ = 0;
@@ -50,6 +50,9 @@ namespace esphome
       }
 
       this->prev_ms_ = ms;
+    }
+
+    void IRAM_ATTR MicronDataProcessor::write(ISRInternalGPIOPin *pin_data_out) {
 
       if (this->remaining_command_writes > 0) {
         // some bits to write remaining
@@ -73,6 +76,9 @@ namespace esphome
       }
 
       //pin_data_out->digital_write(this->num_bits_ % 2 == 0);
+    }
+
+    bool IRAM_ATTR MicronDataProcessor::decode(uint32_t ms, bool data) {
 
       // number of bits received is basically the "state"
       if (this->num_bits_ < MICRON_FRAME_SIZE) {
@@ -127,13 +133,18 @@ namespace esphome
 
       arg->last_interrupt_us_ = now_us;
 
+      auto now_ms = millis();
+
+      arg->processor_.next(now_ms);
+
+      arg->processor_.write(&arg->pin_data_out_);
+
       bool data_bit = arg->pin_data_.digital_read();
 
       arg->bits_received++;
       arg->packet_bits++;
-
-      auto now_ms = millis();
-      if (arg->processor_.decode(now_ms, data_bit, &arg->pin_data_out_)) {
+      
+      if (arg->processor_.decode(now_ms, data_bit)) {
         arg->last_packet_ms = now_ms;
         arg->packets_received++;
         if (arg->packet_interrupts > arg->packet_bits) {
