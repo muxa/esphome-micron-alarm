@@ -238,7 +238,7 @@ namespace esphome
         this->zone5_binary_sensor_->publish_state((this->store_.status & MICRON_ZONE_5_MASK) == MICRON_ZONE_5_MASK);
       }
       
-      if (this->keypad_text_sensor_ && this->command_dedupe_.next(this->store_.command)) {
+      if (this->keypad_text_sensor_ && this->command_dedupe_.next(this->store_.command) && this->store_.command != 0x00) {
         this->keypad_text_sensor_->publish_state(str_sprintf("0x%02x", this->store_.command));
       }
       if (this->status_text_sensor_ && this->status_dedupe_.next(this->store_.status)) {
