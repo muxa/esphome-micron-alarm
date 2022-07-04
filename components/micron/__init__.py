@@ -68,36 +68,46 @@ CONFIG_SCHEMA = cv.All(
             ),
             cv.Optional(CONF_M): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_POWER,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_S1): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_PROBLEM,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_S2): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_PROBLEM,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_BEEP_1): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_SOUND,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_BEEP_2): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_SOUND,
             ),
             cv.Optional(CONF_BEEP_3): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_SOUND,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_ZONE_1): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_OCCUPANCY,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_ZONE_2): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_OCCUPANCY,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_ZONE_3): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_OCCUPANCY,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_ZONE_4): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_OCCUPANCY,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_ZONE_5): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_OCCUPANCY,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_KEYPAD): text_sensor.text_sensor_schema(                
                 entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
