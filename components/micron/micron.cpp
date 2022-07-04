@@ -132,7 +132,9 @@ namespace esphome
       arg->bits_received++;
       arg->packet_bits++;
 
-      if (arg->processor_.decode(millis(), data_bit, &arg->pin_data_out_)) {
+      auto now_ms = millis();
+      if (arg->processor_.decode(now_ms, data_bit, &arg->pin_data_out_)) {
+        arg->last_packet_ms = now_ms;
         arg->packets_received++;
         if (arg->packet_interrupts > arg->packet_bits) {
           arg->packets_with_interference++;
@@ -230,6 +232,10 @@ namespace esphome
       }
       if (this->status_text_sensor_ && this->status_dedupe_.next(this->store_.status)) {
         this->status_text_sensor_->publish_state(str_sprintf("0x%04x", this->store_.status));
+      }
+      if (this->connected_binary_sensor_) {
+        this->connected_binary_sensor_->publish_state((millis() - this->store_.last_packet_ms) < MICRON_CLOCK_TIMEOUT_MS);
+        // ESP_LOGD(TAG, "Delay %d", (millis() - this->store_.last_packet_ms));
       }
 
       if (!this->command_queue_.empty() && (millis() - this->last_command_ms_) >= MICRON_MAX_COMMAND_DELAY_MS) {

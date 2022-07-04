@@ -16,6 +16,7 @@ from esphome.const import (
     DEVICE_CLASS_POWER,
     DEVICE_CLASS_PROBLEM,
     DEVICE_CLASS_SOUND,
+    DEVICE_CLASS_CONNECTIVITY,
     ENTITY_CATEGORY_DIAGNOSTIC,
 )
 
@@ -35,6 +36,8 @@ MicronPressAction = micron_ns.class_("MicronPressAction", automation.Action)
 CONF_DATA_IN_PIN = "data_in_pin"
 CONF_DATA_OUT_PIN = "data_out_pin"
 CONF_PRESS_KEYS = "keys"
+
+CONF_CONNECTED = "connected"
 
 CONF_M = "m"
 CONF_S1 = "s1"
@@ -59,6 +62,10 @@ CONFIG_SCHEMA = cv.All(
             cv.Required(CONF_CLOCK_PIN): cv.All(pins.internal_gpio_input_pin_schema),
             cv.Required(CONF_DATA_IN_PIN): cv.All(pins.internal_gpio_input_pin_schema),
             cv.Required(CONF_DATA_OUT_PIN): cv.All(pins.internal_gpio_output_pin_schema),
+            cv.Optional(CONF_CONNECTED): binary_sensor.binary_sensor_schema(
+                device_class = DEVICE_CLASS_CONNECTIVITY,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+            ),
             cv.Optional(CONF_M): binary_sensor.binary_sensor_schema(
                 device_class = DEVICE_CLASS_POWER,
             ),
@@ -118,6 +125,10 @@ async def to_code(config):
     cg.add(var.set_pin_data(pin_data))
     pin_data_out = await gpio_pin_expression(config[CONF_DATA_OUT_PIN])
     cg.add(var.set_pin_data_out(pin_data_out))
+
+    if CONF_CONNECTED in config:
+        sens = await binary_sensor.new_binary_sensor(config[CONF_CONNECTED])
+        cg.add(var.set_connected_binary_sensor(sens))
 
     if CONF_M in config:
         sens = await binary_sensor.new_binary_sensor(config[CONF_M])
