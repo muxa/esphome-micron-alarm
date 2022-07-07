@@ -201,7 +201,10 @@ namespace esphome
     }
 
     void MicronComponent::loop() {
-
+      bool is_connected = (millis() - this->store_.last_packet_ms) < MICRON_CLOCK_TIMEOUT_MS;
+      if (!is_connected) {
+        this->store_.status = 0x00;
+      }      
       if (this->m_binary_sensor_) {
         this->m_binary_sensor_->publish_state((this->store_.status & MICRON_M_MASK) == MICRON_M_MASK);
       }
@@ -245,8 +248,7 @@ namespace esphome
         this->status_text_sensor_->publish_state(str_sprintf("0x%04x", this->store_.status));
       }
       if (this->connected_binary_sensor_) {
-        this->connected_binary_sensor_->publish_state((millis() - this->store_.last_packet_ms) < MICRON_CLOCK_TIMEOUT_MS);
-        // ESP_LOGD(TAG, "Delay %d", (millis() - this->store_.last_packet_ms));
+        this->connected_binary_sensor_->publish_state(is_connected);
       }
 
       if (!this->command_queue_.empty() && (millis() - this->last_command_ms_) >= MICRON_MAX_COMMAND_DELAY_MS) {
