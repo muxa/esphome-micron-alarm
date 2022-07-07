@@ -67,15 +67,12 @@ CONFIG_SCHEMA = cv.All(
                 entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_M): binary_sensor.binary_sensor_schema(
-                device_class = DEVICE_CLASS_POWER,
                 entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_S1): binary_sensor.binary_sensor_schema(
-                device_class = DEVICE_CLASS_PROBLEM,
                 entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_S2): binary_sensor.binary_sensor_schema(
-                device_class = DEVICE_CLASS_PROBLEM,
                 entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
             cv.Optional(CONF_BEEP_1): binary_sensor.binary_sensor_schema(
