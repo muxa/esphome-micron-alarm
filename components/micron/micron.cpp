@@ -161,6 +161,10 @@ namespace esphome
       this->status = packet->status;
     }
 
+    uint8_t MicronComponent::last_command() {
+      return this->last_command_;
+    }
+
     void MicronComponent::write(uint8_t command) {
       // ESP_LOGD(TAG, "Enqueue command: 0x%02x", command);
       this->command_queue_.push(command);
@@ -255,7 +259,8 @@ namespace esphome
         this->last_command_ms_ = millis();
         auto command = this->command_queue_.front();
         ESP_LOGD(TAG, "Write command: 0x%02x", command);
-        this->store_.write(command, 2);        
+        this->store_.write(command, 2);
+        this->last_command_ = command;     
         this->command_queue_.pop();
         if (this->command_queue_.empty()) {
           ESP_LOGD(TAG, "All commands written");          

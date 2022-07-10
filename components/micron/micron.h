@@ -129,6 +129,8 @@ namespace esphome
       void set_keypad_text_sensor(text_sensor::TextSensor  *keypad_text_sensor) { keypad_text_sensor_ = keypad_text_sensor; }
       void set_status_text_sensor(text_sensor::TextSensor  *status_text_sensor) { status_text_sensor_ = status_text_sensor; }
 
+      uint8_t last_command();
+
       void write(uint8_t command);
       void write(std::vector<uint8_t> commands);
       void press(const std::string &keys);
@@ -169,6 +171,7 @@ namespace esphome
       Deduplicator<uint16_t> status_dedupe_;
 
       uint32_t last_command_ms_ = 0;
+      uint8_t last_command_ = 0;
       std::queue<uint8_t> command_queue_;
     };
 
