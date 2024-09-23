@@ -2,6 +2,13 @@
 
 Control Micron Lynx alarm system from ESPHome.
 
+## Schematic
+
+![Schematic](Schematic.png)
+
+[Schematic PDF](Schematic.pdf)
+
+
 ## Install
 
 ```yaml
