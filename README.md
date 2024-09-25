@@ -68,7 +68,7 @@ To add the alarm to Home Assistant you have a couple of options:
 
 ### 1. Template Alarm control panel in HA
 
-Use the [example-comfig.yaml](example-config.yaml). It uses a [state machine](https://github.com/muxa/esphome-state-machine)):
+Use the [example-config.yaml](example-config.yaml). It uses a [state machine](https://github.com/muxa/esphome-state-machine)):
 
 ```mermaid
 stateDiagram-v2
@@ -131,4 +131,4 @@ With this configuration you'll have additional entities in Home Assistant:
 
 ### 2. Template Alarm Control Panel in ESPHome
 
-Use [Template Alarm Control Panel in ESPHome](https://esphome.io/components/alarm_control_panel/template) and adapt [example-comfig.yaml](example-config.yaml) accordinly. 
+Use [Template Alarm Control Panel in ESPHome](https://esphome.io/components/alarm_control_panel/template) and adapt [example-config.yaml](example-config.yaml) accordinly. 
