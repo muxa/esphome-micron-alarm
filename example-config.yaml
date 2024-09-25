@@ -1,0 +1,361 @@
+substitutions:
+  device_name: Alarm
+
+esphome:
+  name: alarm
+
+esp8266:
+  board: d1_mini
+
+wifi:
+  ap:
+
+captive_portal:
+
+logger:
+  level: DEBUG
+
+# Enable Home Assistant API
+api:
+  encryption: 
+    key: !secret api_encryption_key
+  services:
+    - service: press_keys
+      variables:
+        keys: string
+      then:
+        - lambda: id(alarm1).press(keys);
+    - service: arm_away
+      then:
+      - if:
+          condition: 
+            or: 
+              - state_machine.state: DISARMED
+              - state_machine.state: ALARM
+          then:
+          - logger.log: Arming Away
+          - micron.press: "1#"
+          else:
+          - logger.log: 
+              format: Can't ARM in current state
+              level: WARN
+    - service: disarm
+      variables:
+        user_code: string
+      then:
+      - if:
+          condition: 
+            or: 
+              - state_machine.state: ARMING
+              - state_machine.state: ARMED_AWAY
+              - state_machine.state: PENDING
+              - state_machine.state: TRIGGERED
+          then:
+          - logger.log: Disarming
+          - lambda: id(alarm1).press(user_code+"#");
+          else:
+          - logger.log: 
+              format: Can't disarm in current state
+              level: WARN
+    - service: panic
+      then:
+      - logger.log: Panic
+      - lambda: |-
+          id(alarm1).write(MICRON_KEYPAD_STAR | MICRON_KEYPAD_HASH);
+    - service: transition    
+      variables:
+        input: string
+      then:
+      - logger.log: External Trigger
+      - lambda: id(alarm_sm).transition(input);
+    - service: set    
+      variables:
+        state: string
+      then:
+      - logger.log: External Set
+      - lambda: id(alarm_sm).set(state);
+
+ota:
+  platform: esphome
+  password: !secret ota_password
+
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/muxa/esphome-micron-alarm
+    refresh: 1h
+  - source:
+      type: git
+      url: https://github.com/muxa/esphome-state-machine
+    refresh: 1h
+
+status_led:
+  pin:
+    number: D4
+    inverted: true
+
+micron:
+  id: alarm1
+  clock_pin:
+    number: D1
+    inverted: true
+  data_in_pin: 
+    number: D2
+    inverted: true
+  data_out_pin: D5
+  update_interval: 300s
+  connected:
+    name: "${device_name} Connected"
+    id: connected
+    disabled_by_default: true
+    filters:
+      - delayed_off: 1s
+      - delayed_on: 1s
+    on_press:
+      - lambda: |-
+          if (!id(s1_flashing).state) {
+            if (id(s1_armed).state) {
+              id(alarm_sm).transition("S1_SOLID_ON");
+            } else {
+              id(alarm_sm).transition("S1_OFF");
+            }
+          }
+          // flashing will be handled in the S1 sensor
+    on_release:
+      - state_machine.set: UNKNOWN
+  # keypad:
+  #   name: "${device_name} Keypad"
+  # status:
+  #   name: "${device_name} Status"
+  # m:
+  #   name: "${device_name} M"
+  #   entity_category: diagnostic
+  s1:
+    name: "${device_name} S1"
+    id: s1
+    internal: true
+    on_multi_click:
+    - timing:
+        - ON for at most 70ms
+        - OFF for at most 750ms
+        - ON for at most 70ms
+      then:
+        - logger.log: "S1 is flashing"
+        - lambda: id(s1_flashing).publish_state(true);
+        - state_machine.transition: S1_FLASHING
+  # s2:
+  #   name: "${device_name} S2"
+  #   internal: true
+  # beep1:
+  #   name: "${device_name} Beep 1 Raw"
+  #   entity_category: diagnostic
+  #   id: beep1
+  #   internal: true
+  # beep2:
+  #   name: "${device_name} Beep 2"
+  #   entity_category: diagnostic
+  #   internal: true
+  #   filters:
+  #     - delayed_off: 1s
+  beep3:
+    name: "${device_name} Beep 3 Raw"
+    id: beep3
+    entity_category: diagnostic
+    internal: true
+
+state_machine:
+  - name: "${device_name} State Machine"
+    id: alarm_sm
+    initial_state: UNKNOWN
+    states:
+      - name: UNKNOWN
+      - name: DISARMED
+      - name: ARMING
+      - name: ARMED_AWAY        
+      - name: PENDING # motion detected when alarmed
+        on_enter:
+          - delay: 30s
+          - state_machine.transition: TIMEOUT
+      - name: TRIGGERED
+      - name: ALARM # flashing light after triggered alarm was disarmed
+        # TODO: clear alarm by arming and disarming
+    inputs:
+      - name: S1_SOLID_ON
+        transitions:
+          - UNKNOWN -> ARMED_AWAY
+      - name: S1_ON_OR_FLASHING
+        transitions:
+          - DISARMED -> ARMING
+      - name: S1_OFF
+        transitions:
+          - UNKNOWN -> DISARMED
+          - ARMING -> DISARMED
+          - ARMED_AWAY -> DISARMED
+          - PENDING -> DISARMED
+          - ALARM -> DISARMED
+      - name: S1_FLASHING
+        transitions:
+          - UNKNOWN -> ALARM
+          - ARMED_AWAY -> TRIGGERED
+          - TRIGGERED -> ALARM
+          - ARMING -> ALARM
+      - name: BEEP3_ON
+        transitions:
+          - ARMED_AWAY -> PENDING
+      - name: BEEP3_OFF
+        transitions:
+          - ARMING -> ARMED_AWAY
+          - TRIGGERED -> DISARMED
+      - name: TIMEOUT
+        transitions:
+          - PENDING -> TRIGGERED
+      - name: SIREN_ON
+        transitions:
+          - ARMED_AWAY -> TRIGGERED
+    diagram: mermaid
+
+text_sensor:
+  - platform: state_machine
+    name: "${device_name} State"
+    entity_category: diagnostic
+
+sensor:
+  - platform: adc
+    pin: A0
+    name: "${device_name} Battery Voltage"
+    update_interval: 1s
+    device_class: voltage
+    icon: "mdi:battery"
+    accuracy_decimals: 1
+    filters:
+      - multiply: 15.4
+      - delta: 0.1
+
+output:
+  - platform: esp8266_pwm
+    pin: 
+      number: D8
+      allow_other_uses: true
+    frequency: 500 Hz
+    id: pwm_output
+    min_power: 0
+    max_power: 0.04
+
+switch:
+  - platform: gpio
+    pin: 
+      number: D8
+      allow_other_uses: true
+    name: "${device_name} Interior Siren"
+    id: siren_switch
+    entity_category: config
+    icon: "mdi:bell"
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: D6
+      inverted: true
+    name: "${device_name} Siren Active"
+    id: siren_active
+    device_class: sound
+    entity_category: diagnostic
+    disabled_by_default: true
+    filters:
+      - delayed_on: 100ms
+    on_press:
+      - if:
+          condition:
+            switch.is_off: siren_switch # don't transition on manual alarm ping
+          then:
+            - state_machine.transition: SIREN_ON
+    on_release:
+      - state_machine.transition: SIREN_OFF
+
+  - platform: template
+    name: "${device_name} Beep 3"
+    internal: true
+    entity_category: diagnostic
+    device_class: sound    
+    lambda: return id(beep3).state;
+    filters:
+      - delayed_on: 1s
+      - delayed_off: 2.5s
+    on_press:
+      - state_machine.transition: BEEP3_ON
+    on_release:
+      - state_machine.transition: BEEP3_OFF
+
+  - platform: template
+    name: "${device_name} Armed"
+    id: s1_armed
+    entity_category: diagnostic
+    disabled_by_default: true
+    lambda: |-
+      if (id(connected).state) {
+        return id(s1).state;
+      }
+      return {};
+    filters:
+      - delayed_on: 1s # if flashing then every 0.77s
+    on_press:
+      - state_machine.transition: S1_SOLID_ON
+      - lambda: id(s1_flashing).publish_state(false);
+
+  - platform: template
+    name: "${device_name} S1 Flashing"    
+    id: s1_flashing
+    internal: true
+    entity_category: diagnostic
+
+  - platform: template
+    name: "${device_name} S1 On or Flashing"
+    id: s1_on_or_flashing
+    internal: true
+    entity_category: diagnostic
+    lambda: |-
+      if (id(connected).state) {
+        return id(s1).state;
+      }
+      return {};
+    filters:
+      - delayed_off: 1s # if flashing then every 0.77s
+    on_press:
+      - state_machine.transition: S1_ON_OR_FLASHING
+    on_release:
+      - state_machine.transition: S1_OFF
+      - lambda: id(s1_flashing).publish_state(false);
+
+button:
+  - platform: template
+    name: "${device_name} Arm"
+    icon: "mdi:shield"
+    entity_category: diagnostic
+    disabled_by_default: true
+    on_press:
+      - micron.press: "1#"
+
+  - platform: template
+    name: "${device_name} Panic"
+    icon: "mdi:shield-alert"
+    entity_category: diagnostic
+    disabled_by_default: true
+    on_press:
+      - lambda: |-
+          id(alarm1).write(MICRON_KEYPAD_STAR | MICRON_KEYPAD_HASH);
+
+  - platform: template
+    name: "${device_name} Siren Ping"
+    icon: "mdi:bell"
+    entity_category: diagnostic
+    disabled_by_default: true
+    on_press:
+      - output.turn_on: pwm_output
+      - delay: 50ms
+      - output.turn_off: pwm_output
+
+  - platform: restart
+    name: "${device_name} Restart"
+    entity_category: diagnostic
+    disabled_by_default: true
